@@ -5,6 +5,7 @@ from __future__ import annotations
 from custom_components.elehant_water.models import ElehantChannel, ElehantPacketKind
 from custom_components.elehant_water.parser import (
     looks_like_elehant_address,
+    meter_id_from_address_suffix,
     normalize_address,
     packet_kind_from_address,
     parse_manufacturer_data,
@@ -42,6 +43,13 @@ def test_looks_like_elehant_address() -> None:
     assert not looks_like_elehant_address("AF:01:02:01:6A:38")
 
 
+def test_meter_id_from_address_suffix() -> None:
+    """Extended forks may identify meters by the final three address bytes."""
+    assert meter_id_from_address_suffix("B0:01:02:01:6A:38") == "92728"
+    assert meter_id_from_address_suffix("B00102016A38") == "92728"
+    assert meter_id_from_address_suffix("AF:01:02:01:6A:38") is None
+
+
 def test_parse_single_tariff_payload_without_company_id() -> None:
     """The real single-tariff sample parses without the company ID prefix."""
     reading = parse_manufacturer_payload("B0:01:02:01:6A:38", SINGLE_PAYLOAD, -78)
@@ -52,7 +60,8 @@ def test_parse_single_tariff_payload_without_company_id() -> None:
     assert reading.meter_id == "27192"
     assert reading.raw_count == 3791455
     assert reading.rssi == -78
-    assert reading.temperature_celsius is None
+    assert reading.temperature_celsius == 16.06
+    assert reading.alternate_meter_ids == ("92728",)
 
 
 def test_parse_single_tariff_payload_with_company_id() -> None:

@@ -21,20 +21,9 @@
     "step": {
       "init": {
         "title": "Elehant Water options",
-        "description": "Choose an action.",
-        "menu_options": {
-          "import_yaml": "Import YAML configuration",
-          "edit_meters": "Edit meters JSON"
-        }
-      },
-      "import_yaml": {
-        "title": "Import YAML configuration",
-        "description": "Legacy YAML configuration was not found. Make sure the sensor/platform elehant_water block exists in configuration.yaml, then restart Home Assistant."
-      },
-      "edit_meters": {
-        "title": "Elehant Water options",
-        "description": "Edit the normalized meters JSON. Reload the integration after changing it.",
+        "description": "You can import legacy YAML configuration captured during Home Assistant startup, or manually edit the normalized meters JSON.",
         "data": {
+          "import_yaml": "Import YAML configuration",
           "meters": "Meters"
         }
       }

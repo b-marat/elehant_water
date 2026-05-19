@@ -102,10 +102,12 @@ class ElehantWaterCoordinator:
         """Store a parsed reading if it belongs to a configured channel."""
         now = time.time()
         updated = False
-        key = (reading.meter_id, reading.channel.value)
+        meter_id = self._configured_meter_id(reading, reading.channel.value)
 
-        if key in self._configured_keys:
-            state = self._states.setdefault(key, ElehantChannelState())
+        if meter_id is not None:
+            state = self._states.setdefault(
+                (meter_id, reading.channel.value), ElehantChannelState()
+            )
             state.raw_count = reading.raw_count
             state.last_seen = now
             state.rssi = reading.rssi
@@ -119,9 +121,14 @@ class ElehantWaterCoordinator:
             )
 
         if reading.temperature_celsius is not None:
-            temp_key = (reading.meter_id, ElehantChannel.TEMPERATURE.value)
-            if temp_key in self._configured_keys:
-                state = self._states.setdefault(temp_key, ElehantChannelState())
+            temp_meter_id = self._configured_meter_id(
+                reading, ElehantChannel.TEMPERATURE.value
+            )
+            if temp_meter_id is not None:
+                state = self._states.setdefault(
+                    (temp_meter_id, ElehantChannel.TEMPERATURE.value),
+                    ElehantChannelState(),
+                )
                 state.temperature_celsius = reading.temperature_celsius
                 state.last_seen = now
                 state.rssi = reading.rssi
@@ -130,6 +137,17 @@ class ElehantWaterCoordinator:
         if updated:
             self._async_notify_listeners()
         return updated
+
+    def _configured_meter_id(
+        self,
+        reading: ElehantReading,
+        channel: str,
+    ) -> str | None:
+        """Return the configured meter ID matching a parsed reading."""
+        for meter_id in (reading.meter_id, *reading.alternate_meter_ids):
+            if (meter_id, channel) in self._configured_keys:
+                return meter_id
+        return None
 
     def get_state(self, meter_id: str, channel: str) -> ElehantChannelState | None:
         """Return the latest state for a channel."""

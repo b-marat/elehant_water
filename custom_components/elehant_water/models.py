@@ -34,3 +34,4 @@ class ElehantReading:
     address: str
     rssi: int | None = None
     temperature_celsius: float | None = None
+    alternate_meter_ids: tuple[str, ...] = ()

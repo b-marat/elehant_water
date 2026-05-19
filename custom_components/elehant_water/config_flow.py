@@ -19,6 +19,7 @@ from .const import (
     CONF_CHANNELS,
     CONF_DEVICE_CLASS,
     CONF_LEGACY_ID,
+    CONF_IMPORT_YAML,
     CONF_MEASUREMENT,
     CONF_MEASUREMENT_GAS,
     CONF_MEASUREMENT_WATER,
@@ -42,8 +43,6 @@ VALID_CHANNELS = {
     CHANNEL_TARIFF_2,
     CHANNEL_TEMPERATURE,
 }
-MENU_OPTION_EDIT_METERS = "edit_meters"
-MENU_OPTION_IMPORT_YAML = "import_yaml"
 
 
 def _channel(
@@ -211,54 +210,37 @@ class ElehantWaterOptionsFlow(config_entries.OptionsFlow):
         self,
         user_input: dict[str, Any] | None = None,
     ) -> config_entries.ConfigFlowResult:
-        """Show options menu."""
-        return self.async_show_menu(
-            step_id="init",
-            menu_options=[MENU_OPTION_IMPORT_YAML, MENU_OPTION_EDIT_METERS],
-        )
-
-    async def async_step_import_yaml(
-        self,
-        user_input: dict[str, Any] | None = None,
-    ) -> config_entries.ConfigFlowResult:
-        """Import legacy YAML config captured during Home Assistant setup."""
-        legacy_config = self.hass.data.get(DOMAIN, {}).get(DATA_LEGACY_YAML_CONFIG)
-        if not legacy_config:
-            return self.async_show_form(
-                step_id=MENU_OPTION_IMPORT_YAML,
-                data_schema=vol.Schema({}),
-                errors={"base": "no_yaml_config"},
-            )
-
-        data = normalize_legacy_yaml_config(legacy_config)
-        self.hass.config_entries.async_update_entry(
-            self.config_entry,
-            data={**self.config_entry.data, **data},
-        )
-        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
-        return self.async_create_entry(title="", data={})
-
-    async def async_step_edit_meters(
-        self,
-        user_input: dict[str, Any] | None = None,
-    ) -> config_entries.ConfigFlowResult:
         """Manage normalized meter configuration."""
         errors: dict[str, str] = {}
 
         if user_input is not None:
-            try:
-                meters = json.loads(user_input[CONF_METERS])
-            except ValueError:
-                errors["base"] = "invalid_json"
-            else:
-                if validate_meters_config(meters):
-                    data = {**self.config_entry.data, CONF_METERS: meters}
+            if user_input.get(CONF_IMPORT_YAML):
+                legacy_config = self.hass.data.get(DOMAIN, {}).get(DATA_LEGACY_YAML_CONFIG)
+                if legacy_config:
+                    data = normalize_legacy_yaml_config(legacy_config)
                     self.hass.config_entries.async_update_entry(
                         self.config_entry,
-                        data=data,
+                        data={**self.config_entry.data, **data},
+                    )
+                    await self.hass.config_entries.async_reload(
+                        self.config_entry.entry_id
                     )
                     return self.async_create_entry(title="", data={})
-                errors["base"] = "invalid_meters"
+                errors["base"] = "no_yaml_config"
+            else:
+                try:
+                    meters = json.loads(user_input[CONF_METERS])
+                except ValueError:
+                    errors["base"] = "invalid_json"
+                else:
+                    if validate_meters_config(meters):
+                        data = {**self.config_entry.data, CONF_METERS: meters}
+                        self.hass.config_entries.async_update_entry(
+                            self.config_entry,
+                            data=data,
+                        )
+                        return self.async_create_entry(title="", data={})
+                    errors["base"] = "invalid_meters"
 
         default_meters = json.dumps(
             self.config_entry.data.get(CONF_METERS, []),
@@ -266,7 +248,12 @@ class ElehantWaterOptionsFlow(config_entries.OptionsFlow):
             indent=2,
         )
         return self.async_show_form(
-            step_id=MENU_OPTION_EDIT_METERS,
-            data_schema=vol.Schema({vol.Required(CONF_METERS, default=default_meters): str}),
+            step_id="init",
+            data_schema=vol.Schema(
+                {
+                    vol.Optional(CONF_IMPORT_YAML, default=False): bool,
+                    vol.Required(CONF_METERS, default=default_meters): str,
+                }
+            ),
             errors=errors,
         )

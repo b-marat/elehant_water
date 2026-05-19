@@ -42,6 +42,17 @@ def looks_like_elehant_address(address: str) -> bool:
     return normalize_address(address).startswith(PREFIX_ELEHANT_FAMILY)
 
 
+def meter_id_from_address_suffix(address: str) -> str | None:
+    """Return the legacy fork meter ID encoded in the final three address bytes."""
+    parts = normalize_address(address).split(":")
+    if len(parts) != 6 or parts[0] != PREFIX_ELEHANT_FAMILY:
+        return None
+    try:
+        return str(int("".join(parts[3:6]), 16))
+    except ValueError:
+        return None
+
+
 def strip_company_id_prefix(payload: bytes) -> bytes:
     """Remove the company identifier prefix if a tool included it in payload bytes."""
     if payload.startswith(COMPANY_ID_PREFIX):
@@ -69,10 +80,19 @@ def parse_manufacturer_payload(
         return None
 
     meter_id = str(int.from_bytes(payload[6:8], byteorder="little"))
+    address_meter_id = meter_id_from_address_suffix(address)
+    alternate_meter_ids = (
+        (address_meter_id,)
+        if address_meter_id is not None and address_meter_id != meter_id
+        else ()
+    )
     raw_count = int.from_bytes(payload[9:12], byteorder="little")
     normalized_address = normalize_address(address)
 
     if packet_kind is ElehantPacketKind.SINGLE_TARIFF:
+        temperature_celsius = None
+        if len(payload) >= MIN_TEMPERATURE_PAYLOAD_LEN:
+            temperature_celsius = int.from_bytes(payload[14:16], byteorder="little") / 100
         return ElehantReading(
             meter_id=meter_id,
             channel=ElehantChannel.VOLUME,
@@ -80,6 +100,8 @@ def parse_manufacturer_payload(
             packet_kind=packet_kind,
             address=normalized_address,
             rssi=rssi,
+            temperature_celsius=temperature_celsius,
+            alternate_meter_ids=alternate_meter_ids,
         )
 
     temperature_celsius = int.from_bytes(payload[14:16], byteorder="little") / 100
@@ -96,6 +118,7 @@ def parse_manufacturer_payload(
         address=normalized_address,
         rssi=rssi,
         temperature_celsius=temperature_celsius,
+        alternate_meter_ids=alternate_meter_ids,
     )
 
 

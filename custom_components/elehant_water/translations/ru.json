@@ -21,20 +21,9 @@
     "step": {
       "init": {
         "title": "Параметры Elehant Water",
-        "description": "Выберите действие.",
-        "menu_options": {
-          "import_yaml": "Импортировать YAML-конфигурацию",
-          "edit_meters": "Редактировать JSON счетчиков"
-        }
-      },
-      "import_yaml": {
-        "title": "Импорт YAML-конфигурации",
-        "description": "Legacy YAML-конфигурация не найдена. Убедитесь, что блок sensor/platform elehant_water есть в configuration.yaml, затем перезапустите Home Assistant."
-      },
-      "edit_meters": {
-        "title": "Параметры Elehant Water",
-        "description": "Отредактируйте нормализованный JSON счетчиков. После изменения перезагрузите интеграцию.",
+        "description": "Можно импортировать legacy YAML-конфигурацию, найденную при загрузке Home Assistant, или вручную отредактировать нормализованный JSON счетчиков.",
         "data": {
+          "import_yaml": "Импортировать YAML-конфигурацию",
           "meters": "Счетчики"
         }
       }
