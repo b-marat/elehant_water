@@ -141,6 +141,11 @@ def validate_meters_config(meters: Any) -> bool:
     return True
 
 
+def config_entry_has_meters(config_entry: config_entries.ConfigEntry) -> bool:
+    """Return whether a config entry already contains meter configuration."""
+    return bool(config_entry.data.get(CONF_METERS))
+
+
 class ElehantWaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     """Handle an Elehant Water config flow."""
 
@@ -181,6 +186,14 @@ class ElehantWaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
         entries = self._async_current_entries()
         if entries:
+            entry = entries[0]
+            if not config_entry_has_meters(entry):
+                self.hass.config_entries.async_update_entry(
+                    entry,
+                    data={**entry.data, **data},
+                )
+                await self.hass.config_entries.async_reload(entry.entry_id)
+                return self.async_abort(reason="imported_to_existing_entry")
             return self.async_abort(reason="already_configured")
 
         return self.async_create_entry(title="Elehant Water", data=data)

@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 from custom_components.elehant_water.config_flow import (
+    config_entry_has_meters,
     normalize_legacy_yaml_config,
     validate_meters_config,
 )
@@ -163,4 +166,27 @@ def test_validate_meters_config() -> None:
                 ],
             }
         ]
+    )
+
+
+def test_config_entry_has_meters() -> None:
+    """Empty manual entries can be distinguished from migrated entries."""
+    assert not config_entry_has_meters(SimpleNamespace(data={CONF_METERS: []}))
+    assert config_entry_has_meters(
+        SimpleNamespace(
+            data={
+                CONF_METERS: [
+                    {
+                        CONF_METER_ID: "31560",
+                        CONF_CHANNELS: [
+                            {
+                                CONF_CHANNEL: CHANNEL_VOLUME,
+                                CONF_LEGACY_ID: "31560",
+                                "name": "Single",
+                            }
+                        ],
+                    }
+                ]
+            }
+        )
     )

@@ -1,9 +1,9 @@
 {
     "domain": "elehant_water",
     "name": "Elehant Water",
-    "documentation": "https://github.com/raxers/elehant_water",
-    "issue_tracker": "https://github.com/raxers/elehant_water/issues",
-    "codeowners": ["@raxErs"],
+    "documentation": "https://github.com/b-marat/elehant_water",
+    "issue_tracker": "https://github.com/b-marat/elehant_water/issues",
+    "codeowners": ["@b-marat"],
     "config_flow": true,
     "dependencies": ["bluetooth_adapters"],
     "integration_type": "hub",

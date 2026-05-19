@@ -2,12 +2,13 @@
   "config": {
     "abort": {
       "already_configured": "Elehant Water is already configured.",
+      "imported_to_existing_entry": "YAML configuration was imported into the existing empty Elehant Water entry.",
       "single_instance_allowed": "Only one Elehant Water configuration entry is supported."
     },
     "step": {
       "user": {
         "title": "Elehant Water",
-        "description": "Create an empty Elehant Water configuration entry. Existing YAML configuration is imported automatically."
+        "description": "Create an empty Elehant Water configuration entry. If you are migrating old YAML configuration, you can keep it in configuration.yaml: it will be imported automatically when Home Assistant loads."
       }
     }
   },
