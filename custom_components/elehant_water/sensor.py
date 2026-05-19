@@ -31,8 +31,12 @@ from .const import (
     CONF_DEVICE_CLASS,
     CONF_LEGACY_ID,
     CONF_MEASUREMENT,
+    CONF_MEASUREMENT_GAS,
+    CONF_MEASUREMENT_WATER,
     CONF_METERS,
     CONF_METER_ID,
+    CONF_TYPE,
+    CONF_WATER_TYPE,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_WATER,
     DOMAIN,
@@ -43,6 +47,17 @@ from .const import (
 )
 from .coordinator import ElehantWaterCoordinator
 
+LEGACY_DEVICE_SCHEMA = vol.Schema(
+    {
+        vol.Required(CONF_ID): vol.Any(str, int),
+        vol.Required(CONF_NAME): cv.string,
+        vol.Optional(CONF_NAME_TEMP): cv.string,
+        vol.Optional(CONF_TYPE): cv.string,
+        vol.Optional(CONF_WATER_TYPE): cv.string,
+    },
+    extra=vol.ALLOW_EXTRA,
+)
+
 PLATFORM_SCHEMA = SENSOR_PLATFORM_SCHEMA.extend(
     {
         vol.Optional("scan_duration"): cv.positive_int,
@@ -50,13 +65,13 @@ PLATFORM_SCHEMA = SENSOR_PLATFORM_SCHEMA.extend(
         vol.Optional(CONF_MEASUREMENT, default=MEASUREMENT_LITERS): vol.In(
             [MEASUREMENT_LITERS, MEASUREMENT_CUBIC_METERS]
         ),
-        vol.Required(CONF_DEVICES): [
-            {
-                vol.Required(CONF_ID): vol.Any(str, int),
-                vol.Required(CONF_NAME): cv.string,
-                vol.Optional(CONF_NAME_TEMP): cv.string,
-            }
-        ],
+        vol.Optional(CONF_MEASUREMENT_WATER): vol.In(
+            [MEASUREMENT_LITERS, MEASUREMENT_CUBIC_METERS]
+        ),
+        vol.Optional(CONF_MEASUREMENT_GAS): vol.In(
+            [MEASUREMENT_LITERS, MEASUREMENT_CUBIC_METERS]
+        ),
+        vol.Required(CONF_DEVICES): [LEGACY_DEVICE_SCHEMA],
     }
 )
 

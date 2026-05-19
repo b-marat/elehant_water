@@ -19,8 +19,12 @@ from .const import (
     CONF_DEVICE_CLASS,
     CONF_LEGACY_ID,
     CONF_MEASUREMENT,
+    CONF_MEASUREMENT_GAS,
+    CONF_MEASUREMENT_WATER,
     CONF_METERS,
     CONF_METER_ID,
+    CONF_TYPE,
+    CONF_WATER_TYPE,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_WATER,
     DOMAIN,
@@ -29,6 +33,7 @@ from .const import (
 )
 
 CONF_NAME_TEMP = "name_temp"
+DEVICE_TYPE_GAS = "gas"
 VALID_CHANNELS = {
     CHANNEL_VOLUME,
     CHANNEL_TARIFF_1,
@@ -55,12 +60,23 @@ def _channel(
 
 def normalize_legacy_yaml_config(config: dict[str, Any]) -> dict[str, Any]:
     """Convert legacy YAML platform config to config entry data."""
-    measurement = str(config.get(CONF_MEASUREMENT) or MEASUREMENT_LITERS)
+    default_measurement = str(config.get(CONF_MEASUREMENT) or MEASUREMENT_LITERS)
+    water_measurement = str(
+        config.get(CONF_MEASUREMENT_WATER) or default_measurement
+    )
+    gas_measurement = str(config.get(CONF_MEASUREMENT_GAS) or default_measurement)
     meters: dict[str, dict[str, Any]] = {}
 
     for device in config.get(CONF_DEVICES, []):
         legacy_id = str(device[CONF_ID])
         name = str(device[CONF_NAME])
+        device_type = device.get(CONF_TYPE)
+        water_type = device.get(CONF_WATER_TYPE)
+        measurement = (
+            gas_measurement
+            if str(device_type).lower() == DEVICE_TYPE_GAS
+            else water_measurement
+        )
         if "_" in legacy_id:
             meter_id, suffix = legacy_id.rsplit("_", 1)
             channel = CHANNEL_TARIFF_1 if suffix == "1" else CHANNEL_TARIFF_2
@@ -69,6 +85,10 @@ def normalize_legacy_yaml_config(config: dict[str, Any]) -> dict[str, Any]:
             channel = CHANNEL_VOLUME
 
         meter = meters.setdefault(meter_id, {CONF_METER_ID: meter_id, CONF_CHANNELS: []})
+        if device_type is not None:
+            meter[CONF_TYPE] = str(device_type)
+        if water_type is not None:
+            meter[CONF_WATER_TYPE] = str(water_type)
         meter[CONF_CHANNELS].append(
             _channel(channel, legacy_id, name, measurement, DEVICE_CLASS_WATER)
         )
