@@ -5,6 +5,8 @@ from __future__ import annotations
 from types import SimpleNamespace
 
 from custom_components.elehant_water.config_flow import (
+    ElehantWaterConfigFlow,
+    ElehantWaterOptionsFlow,
     config_entry_has_meters,
     normalize_legacy_yaml_config,
     validate_meters_config,
@@ -190,3 +192,13 @@ def test_config_entry_has_meters() -> None:
             }
         )
     )
+
+
+def test_options_flow_factory_uses_modern_base_class_contract() -> None:
+    """Options flow must not assign the read-only config_entry property."""
+    options_flow = ElehantWaterConfigFlow.async_get_options_flow(
+        SimpleNamespace(data={CONF_METERS: []})
+    )
+
+    assert isinstance(options_flow, ElehantWaterOptionsFlow)
+    assert "config_entry" not in options_flow.__dict__

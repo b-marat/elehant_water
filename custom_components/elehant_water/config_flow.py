@@ -156,7 +156,7 @@ class ElehantWaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         config_entry: config_entries.ConfigEntry,
     ) -> ElehantWaterOptionsFlow:
         """Create the options flow."""
-        return ElehantWaterOptionsFlow(config_entry)
+        return ElehantWaterOptionsFlow()
 
     async def async_step_user(
         self,
@@ -201,10 +201,6 @@ class ElehantWaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
 
 class ElehantWaterOptionsFlow(config_entries.OptionsFlow):
     """Handle Elehant Water options."""
-
-    def __init__(self, config_entry: config_entries.ConfigEntry) -> None:
-        """Initialize options flow."""
-        self.config_entry = config_entry
 
     async def async_step_init(
         self,
