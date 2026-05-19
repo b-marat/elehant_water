@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 from homeassistant import config_entries
+from homeassistant.config_entries import ConfigEntryState
 from homeassistant.const import CONF_DEVICES, CONF_ID, CONF_NAME
 import voluptuous as vol
 
@@ -25,6 +26,7 @@ from .const import (
     CONF_METER_ID,
     CONF_TYPE,
     CONF_WATER_TYPE,
+    DATA_LEGACY_YAML_CONFIG,
     DEVICE_CLASS_TEMPERATURE,
     DEVICE_CLASS_WATER,
     DOMAIN,
@@ -40,6 +42,8 @@ VALID_CHANNELS = {
     CHANNEL_TARIFF_2,
     CHANNEL_TEMPERATURE,
 }
+MENU_OPTION_EDIT_METERS = "edit_meters"
+MENU_OPTION_IMPORT_YAML = "import_yaml"
 
 
 def _channel(
@@ -192,7 +196,8 @@ class ElehantWaterConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                     entry,
                     data={**entry.data, **data},
                 )
-                await self.hass.config_entries.async_reload(entry.entry_id)
+                if entry.state is ConfigEntryState.LOADED:
+                    await self.hass.config_entries.async_reload(entry.entry_id)
                 return self.async_abort(reason="imported_to_existing_entry")
             return self.async_abort(reason="already_configured")
 
@@ -203,6 +208,37 @@ class ElehantWaterOptionsFlow(config_entries.OptionsFlow):
     """Handle Elehant Water options."""
 
     async def async_step_init(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> config_entries.ConfigFlowResult:
+        """Show options menu."""
+        return self.async_show_menu(
+            step_id="init",
+            menu_options=[MENU_OPTION_IMPORT_YAML, MENU_OPTION_EDIT_METERS],
+        )
+
+    async def async_step_import_yaml(
+        self,
+        user_input: dict[str, Any] | None = None,
+    ) -> config_entries.ConfigFlowResult:
+        """Import legacy YAML config captured during Home Assistant setup."""
+        legacy_config = self.hass.data.get(DOMAIN, {}).get(DATA_LEGACY_YAML_CONFIG)
+        if not legacy_config:
+            return self.async_show_form(
+                step_id=MENU_OPTION_IMPORT_YAML,
+                data_schema=vol.Schema({}),
+                errors={"base": "no_yaml_config"},
+            )
+
+        data = normalize_legacy_yaml_config(legacy_config)
+        self.hass.config_entries.async_update_entry(
+            self.config_entry,
+            data={**self.config_entry.data, **data},
+        )
+        await self.hass.config_entries.async_reload(self.config_entry.entry_id)
+        return self.async_create_entry(title="", data={})
+
+    async def async_step_edit_meters(
         self,
         user_input: dict[str, Any] | None = None,
     ) -> config_entries.ConfigFlowResult:
@@ -230,7 +266,7 @@ class ElehantWaterOptionsFlow(config_entries.OptionsFlow):
             indent=2,
         )
         return self.async_show_form(
-            step_id="init",
+            step_id=MENU_OPTION_EDIT_METERS,
             data_schema=vol.Schema({vol.Required(CONF_METERS, default=default_meters): str}),
             errors=errors,
         )

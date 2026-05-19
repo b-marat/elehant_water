@@ -15,10 +15,23 @@
   "options": {
     "error": {
       "invalid_json": "The meter configuration must be valid JSON.",
-      "invalid_meters": "The meter configuration must be a valid normalized meters array."
+      "invalid_meters": "The meter configuration must be a valid normalized meters array.",
+      "no_yaml_config": "Legacy Elehant Water YAML configuration was not found in the loaded Home Assistant configuration."
     },
     "step": {
       "init": {
+        "title": "Elehant Water options",
+        "description": "Choose an action.",
+        "menu_options": {
+          "import_yaml": "Import YAML configuration",
+          "edit_meters": "Edit meters JSON"
+        }
+      },
+      "import_yaml": {
+        "title": "Import YAML configuration",
+        "description": "Legacy YAML configuration was not found. Make sure the sensor/platform elehant_water block exists in configuration.yaml, then restart Home Assistant."
+      },
+      "edit_meters": {
         "title": "Elehant Water options",
         "description": "Edit the normalized meters JSON. Reload the integration after changing it.",
         "data": {

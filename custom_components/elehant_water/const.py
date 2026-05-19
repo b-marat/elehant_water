@@ -15,6 +15,7 @@ CONF_MEASUREMENT_GAS = "measurement_gas"
 CONF_MEASUREMENT_WATER = "measurement_water"
 CONF_TYPE = "type"
 CONF_WATER_TYPE = "water_type"
+DATA_LEGACY_YAML_CONFIG = "legacy_yaml_config"
 
 CHANNEL_VOLUME = "volume"
 CHANNEL_TARIFF_1 = "tariff_1"

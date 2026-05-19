@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from .const import DOMAIN
+from .const import DATA_LEGACY_YAML_CONFIG, DOMAIN
 
 PLATFORMS = ["sensor"]
 
@@ -15,7 +15,27 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup(hass: Any, config: dict) -> bool:
     """Set up the integration."""
     hass.data.setdefault(DOMAIN, {})
+    if legacy_config := _extract_legacy_yaml_config(config):
+        hass.data[DOMAIN][DATA_LEGACY_YAML_CONFIG] = legacy_config
+        await hass.config_entries.flow.async_init(
+            DOMAIN,
+            context={"source": "import"},
+            data=legacy_config,
+        )
     return True
+
+
+def _extract_legacy_yaml_config(config: dict[str, Any]) -> dict[str, Any] | None:
+    """Extract legacy sensor platform config from full Home Assistant config."""
+    sensor_config = config.get("sensor")
+    if not isinstance(sensor_config, list):
+        return None
+    for platform_config in sensor_config:
+        if not isinstance(platform_config, dict):
+            continue
+        if platform_config.get("platform") == DOMAIN:
+            return dict(platform_config)
+    return None
 
 
 async def async_setup_entry(hass: Any, entry: Any) -> bool:

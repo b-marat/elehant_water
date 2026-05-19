@@ -15,10 +15,23 @@
   "options": {
     "error": {
       "invalid_json": "Конфигурация счетчиков должна быть корректным JSON.",
-      "invalid_meters": "Конфигурация счетчиков должна быть корректным нормализованным JSON-массивом."
+      "invalid_meters": "Конфигурация счетчиков должна быть корректным нормализованным JSON-массивом.",
+      "no_yaml_config": "Legacy YAML-конфигурация Elehant Water не найдена в загруженной конфигурации Home Assistant."
     },
     "step": {
       "init": {
+        "title": "Параметры Elehant Water",
+        "description": "Выберите действие.",
+        "menu_options": {
+          "import_yaml": "Импортировать YAML-конфигурацию",
+          "edit_meters": "Редактировать JSON счетчиков"
+        }
+      },
+      "import_yaml": {
+        "title": "Импорт YAML-конфигурации",
+        "description": "Legacy YAML-конфигурация не найдена. Убедитесь, что блок sensor/platform elehant_water есть в configuration.yaml, затем перезапустите Home Assistant."
+      },
+      "edit_meters": {
         "title": "Параметры Elehant Water",
         "description": "Отредактируйте нормализованный JSON счетчиков. После изменения перезагрузите интеграцию.",
         "data": {
