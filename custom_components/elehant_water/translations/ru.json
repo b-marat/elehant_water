@@ -1,0 +1,29 @@
+{
+  "config": {
+    "abort": {
+      "already_configured": "Elehant Water уже настроен.",
+      "single_instance_allowed": "Поддерживается только одна запись конфигурации Elehant Water."
+    },
+    "step": {
+      "user": {
+        "title": "Elehant Water",
+        "description": "Создать пустую запись конфигурации Elehant Water. Существующая YAML-конфигурация импортируется автоматически."
+      }
+    }
+  },
+  "options": {
+    "error": {
+      "invalid_json": "Конфигурация счетчиков должна быть корректным JSON.",
+      "invalid_meters": "Конфигурация счетчиков должна быть корректным нормализованным JSON-массивом."
+    },
+    "step": {
+      "init": {
+        "title": "Параметры Elehant Water",
+        "description": "Отредактируйте нормализованный JSON счетчиков. После изменения перезагрузите интеграцию.",
+        "data": {
+          "meters": "Счетчики"
+        }
+      }
+    }
+  }
+}

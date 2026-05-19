@@ -1,0 +1,112 @@
+"""Parser for Elehant BLE advertisement data."""
+
+from __future__ import annotations
+
+from collections.abc import Mapping
+
+from .models import ElehantChannel, ElehantPacketKind, ElehantReading
+
+PREFIX_SINGLE_TARIFF = "b0:01:02"
+PREFIX_TARIFF_1 = "b0:03:02"
+PREFIX_TARIFF_2 = "b0:04:02"
+PREFIX_ELEHANT_FAMILY = "b0"
+
+COMPANY_ID_PREFIX = b"\xff\xff"
+
+MIN_VOLUME_PAYLOAD_LEN = 12
+MIN_TEMPERATURE_PAYLOAD_LEN = 16
+
+
+def normalize_address(address: str) -> str:
+    """Normalize a Bluetooth address to lower-case colon-separated form."""
+    compact = "".join(char for char in address if char.isalnum()).lower()
+    if len(compact) == 12:
+        return ":".join(compact[index : index + 2] for index in range(0, 12, 2))
+    return address.replace("-", ":").lower()
+
+
+def packet_kind_from_address(address: str) -> ElehantPacketKind | None:
+    """Return the Elehant packet kind identified by a legacy address prefix."""
+    normalized = normalize_address(address)
+    if normalized.startswith(PREFIX_SINGLE_TARIFF):
+        return ElehantPacketKind.SINGLE_TARIFF
+    if normalized.startswith(PREFIX_TARIFF_1):
+        return ElehantPacketKind.TWO_TARIFF_1
+    if normalized.startswith(PREFIX_TARIFF_2):
+        return ElehantPacketKind.TWO_TARIFF_2
+    return None
+
+
+def looks_like_elehant_address(address: str) -> bool:
+    """Return whether an address belongs to the broad Elehant prefix family."""
+    return normalize_address(address).startswith(PREFIX_ELEHANT_FAMILY)
+
+
+def strip_company_id_prefix(payload: bytes) -> bytes:
+    """Remove the company identifier prefix if a tool included it in payload bytes."""
+    if payload.startswith(COMPANY_ID_PREFIX):
+        return payload[len(COMPANY_ID_PREFIX) :]
+    return payload
+
+
+def parse_manufacturer_payload(
+    address: str,
+    payload: bytes,
+    rssi: int | None = None,
+) -> ElehantReading | None:
+    """Parse one Elehant manufacturer payload."""
+    packet_kind = packet_kind_from_address(address)
+    if packet_kind is None:
+        return None
+
+    payload = strip_company_id_prefix(payload)
+    min_len = (
+        MIN_VOLUME_PAYLOAD_LEN
+        if packet_kind is ElehantPacketKind.SINGLE_TARIFF
+        else MIN_TEMPERATURE_PAYLOAD_LEN
+    )
+    if len(payload) < min_len:
+        return None
+
+    meter_id = str(int.from_bytes(payload[6:8], byteorder="little"))
+    raw_count = int.from_bytes(payload[9:12], byteorder="little")
+    normalized_address = normalize_address(address)
+
+    if packet_kind is ElehantPacketKind.SINGLE_TARIFF:
+        return ElehantReading(
+            meter_id=meter_id,
+            channel=ElehantChannel.VOLUME,
+            raw_count=raw_count,
+            packet_kind=packet_kind,
+            address=normalized_address,
+            rssi=rssi,
+        )
+
+    temperature_celsius = int.from_bytes(payload[14:16], byteorder="little") / 100
+    channel = (
+        ElehantChannel.TARIFF_1
+        if packet_kind is ElehantPacketKind.TWO_TARIFF_1
+        else ElehantChannel.TARIFF_2
+    )
+    return ElehantReading(
+        meter_id=meter_id,
+        channel=channel,
+        raw_count=raw_count,
+        packet_kind=packet_kind,
+        address=normalized_address,
+        rssi=rssi,
+        temperature_celsius=temperature_celsius,
+    )
+
+
+def parse_manufacturer_data(
+    address: str,
+    manufacturer_data: Mapping[int, bytes],
+    rssi: int | None = None,
+) -> ElehantReading | None:
+    """Parse manufacturer data from a Bluetooth advertisement."""
+    for payload in manufacturer_data.values():
+        reading = parse_manufacturer_payload(address, payload, rssi)
+        if reading is not None:
+            return reading
+    return None

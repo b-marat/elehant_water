@@ -1,0 +1,23 @@
+{
+  "name": "single_tariff_b00102_sanitized",
+  "source": "Bluetooth LE Explorer screenshot transcribed from docs/BLE_Expl_1.png",
+  "address": "B0:01:02:00:00:01",
+  "address_type": "public",
+  "advertisement_type": "NonConnectableUndirected",
+  "connectable": false,
+  "scannable": false,
+  "scan_response": false,
+  "rssi": -78,
+  "manufacturer_data_display": "FF-FF-80-25-A0-01-02-01-38-6A-01-5F-DA-39-00-25-46-06-16",
+  "manufacturer_id": 65535,
+  "manufacturer_payload": "80-25-A0-01-02-01-38-6A-01-5F-DA-39-00-25-46-06-16",
+  "expected": {
+    "packet_kind": "single_tariff",
+    "meter_id": "27192",
+    "channel": "volume",
+    "raw_count": 3791455,
+    "legacy_liters": 379145.5,
+    "legacy_cubic_meters": 379.1455,
+    "temperature_celsius": null
+  }
+}
