@@ -3,6 +3,8 @@
     "abort": {
       "already_configured": "Elehant Water уже настроен.",
       "imported_to_existing_entry": "YAML-конфигурация импортирована в существующую пустую запись Elehant Water.",
+      "no_meters": "Счетчики еще не настроены.",
+      "no_discovered_meters": "Новые счетчики Elehant в последнее время не обнаружены.",
       "single_instance_allowed": "Поддерживается только одна запись конфигурации Elehant Water."
     },
     "step": {
@@ -15,18 +17,97 @@
   "options": {
     "error": {
       "invalid_json": "Конфигурация счетчиков должна быть корректным JSON.",
-      "invalid_meters": "Конфигурация счетчиков должна быть корректным нормализованным JSON-массивом.",
+      "invalid_meters": "Конфигурация счетчиков должна быть корректным нормализованным массивом.",
+      "invalid_meter_id": "ID счетчика должен быть десятичным числом от 0 до 16777215.",
+      "meter_already_configured": "Этот счетчик уже настроен.",
       "no_yaml_config": "Legacy YAML-конфигурация Elehant Water не найдена в загруженной конфигурации Home Assistant."
     },
     "step": {
       "init": {
         "title": "Параметры Elehant Water",
-        "description": "Можно импортировать legacy YAML-конфигурацию, найденную при загрузке Home Assistant, или вручную отредактировать нормализованный JSON счетчиков.",
+        "description": "Выберите действие.",
+        "menu_options": {
+          "edit_meters": "Редактировать счетчики",
+          "add_manual_meter": "Добавить счетчик вручную",
+          "discover_meters": "Добавить найденный счетчик",
+          "import_yaml": "Импортировать YAML",
+          "advanced_json": "Расширенный JSON"
+        }
+      },
+      "import_yaml": {
+        "title": "Импорт YAML-конфигурации",
+        "description": "Импортировать legacy YAML-конфигурацию, найденную при запуске Home Assistant."
+      },
+      "advanced_json": {
+        "title": "Расширенный JSON",
+        "description": "Ручное редактирование нормализованной JSON-конфигурации счетчиков.",
         "data": {
-          "import_yaml": "Импортировать YAML-конфигурацию",
           "meters": "Счетчики"
         }
+      },
+      "edit_meters": {
+        "title": "Выбор счетчика",
+        "data": {
+          "meter_index": "Счетчик"
+        }
+      },
+      "edit_meter": {
+        "title": "Редактирование счетчика",
+        "data": {
+          "name": "Название",
+          "volume_unit": "Единица объема",
+          "temperature_enabled": "Температурный канал включен",
+          "availability_enabled": "Контроль доступности включен",
+          "availability_timeout_minutes": "Таймаут доступности, минут"
+        }
+      },
+      "discover_meters": {
+        "title": "Найденные счетчики",
+        "data": {
+          "candidate_meter_id": "ID счетчика"
+        }
+      },
+      "add_discovered_meter": {
+        "title": "Добавить найденный счетчик",
+        "description": "Добавить счетчик Elehant {meter_id}.",
+        "data": {
+          "name": "Название",
+          "volume_unit": "Единица объема",
+          "temperature_enabled": "Температурный канал включен",
+          "availability_enabled": "Контроль доступности включен",
+          "availability_timeout_minutes": "Таймаут доступности, минут"
+        }
+      },
+      "add_manual_meter": {
+        "title": "Добавить счетчик вручную",
+        "description": "Используйте этот вариант, если discovery еще не увидел счетчик.",
+        "data": {
+          "meter_id": "ID счетчика",
+          "name": "Название",
+          "volume_unit": "Единица объема",
+          "temperature_enabled": "Температурный канал включен",
+          "availability_enabled": "Контроль доступности включен",
+          "availability_timeout_minutes": "Таймаут доступности, минут"
+        }
       }
+    }
+  },
+  "issues": {
+    "no_bluetooth_scanner": {
+      "title": "Bluetooth-сканер недоступен",
+      "description": "Elehant Water не смог запуститься, потому что Home Assistant не видит доступный пассивный Bluetooth-сканер. Проверьте Bluetooth-адаптер, интеграцию Bluetooth, права хоста и настройки оборудования."
+    },
+    "malformed_config": {
+      "title": "Конфигурация Elehant Water повреждена",
+      "description": "Сохраненная запись конфигурации Elehant Water не соответствует ожидаемой схеме. Откройте параметры интеграции и проверьте расширенный JSON или повторно импортируйте YAML-конфигурацию."
+    },
+    "duplicate_meter_ids": {
+      "title": "Дублирующиеся ID счетчиков Elehant",
+      "description": "В Elehant Water настроены дублирующиеся canonical ID счетчиков: {meter_ids}. Удалите дубли в параметрах интеграции."
+    },
+    "meter_never_seen": {
+      "title": "Счетчик Elehant не был обнаружен",
+      "description": "Счетчик Elehant {meter_id} не был обнаружен с момента запуска интеграции. Проверьте зону приема Bluetooth, ID счетчика и то, что счетчик передает пакеты."
     }
   }
 }

@@ -3,6 +3,8 @@
     "abort": {
       "already_configured": "Elehant Water is already configured.",
       "imported_to_existing_entry": "YAML configuration was imported into the existing empty Elehant Water entry.",
+      "no_meters": "No meters are configured yet.",
+      "no_discovered_meters": "No new Elehant meters have been seen recently.",
       "single_instance_allowed": "Only one Elehant Water configuration entry is supported."
     },
     "step": {
@@ -16,17 +18,96 @@
     "error": {
       "invalid_json": "The meter configuration must be valid JSON.",
       "invalid_meters": "The meter configuration must be a valid normalized meters array.",
+      "invalid_meter_id": "The meter ID must be a decimal number from 0 to 16777215.",
+      "meter_already_configured": "This meter is already configured.",
       "no_yaml_config": "Legacy Elehant Water YAML configuration was not found in the loaded Home Assistant configuration."
     },
     "step": {
       "init": {
         "title": "Elehant Water options",
-        "description": "You can import legacy YAML configuration captured during Home Assistant startup, or manually edit the normalized meters JSON.",
-        "data": {
+        "description": "Choose what you want to configure.",
+        "menu_options": {
+          "edit_meters": "Edit meters",
+          "add_manual_meter": "Add meter manually",
+          "discover_meters": "Add discovered meter",
           "import_yaml": "Import YAML configuration",
+          "advanced_json": "Advanced JSON editor"
+        }
+      },
+      "import_yaml": {
+        "title": "Import YAML configuration",
+        "description": "Import the legacy YAML configuration captured when Home Assistant started."
+      },
+      "advanced_json": {
+        "title": "Advanced JSON editor",
+        "description": "Manually edit the normalized meters JSON.",
+        "data": {
           "meters": "Meters"
         }
+      },
+      "edit_meters": {
+        "title": "Select meter",
+        "data": {
+          "meter_index": "Meter"
+        }
+      },
+      "edit_meter": {
+        "title": "Edit meter",
+        "data": {
+          "name": "Name",
+          "volume_unit": "Volume unit",
+          "temperature_enabled": "Temperature channel enabled",
+          "availability_enabled": "Availability timeout enabled",
+          "availability_timeout_minutes": "Availability timeout, minutes"
+        }
+      },
+      "discover_meters": {
+        "title": "Discovered meters",
+        "data": {
+          "candidate_meter_id": "Meter ID"
+        }
+      },
+      "add_discovered_meter": {
+        "title": "Add discovered meter",
+        "description": "Add Elehant meter {meter_id}.",
+        "data": {
+          "name": "Name",
+          "volume_unit": "Volume unit",
+          "temperature_enabled": "Temperature channel enabled",
+          "availability_enabled": "Availability timeout enabled",
+          "availability_timeout_minutes": "Availability timeout, minutes"
+        }
+      },
+      "add_manual_meter": {
+        "title": "Add meter manually",
+        "description": "Use this when discovery has not seen the meter yet.",
+        "data": {
+          "meter_id": "Meter ID",
+          "name": "Name",
+          "volume_unit": "Volume unit",
+          "temperature_enabled": "Temperature channel enabled",
+          "availability_enabled": "Availability timeout enabled",
+          "availability_timeout_minutes": "Availability timeout, minutes"
+        }
       }
+    }
+  },
+  "issues": {
+    "no_bluetooth_scanner": {
+      "title": "No Bluetooth scanner available",
+      "description": "Elehant Water could not start because Home Assistant has no passive Bluetooth scanner available. Check Bluetooth hardware, Bluetooth integration, adapters, and host permissions."
+    },
+    "malformed_config": {
+      "title": "Elehant Water configuration is malformed",
+      "description": "The stored Elehant Water configuration entry does not match the expected schema. Open integration options and review the advanced JSON configuration or re-import the YAML configuration."
+    },
+    "duplicate_meter_ids": {
+      "title": "Duplicate Elehant meter IDs",
+      "description": "Elehant Water has duplicate canonical meter IDs: {meter_ids}. Remove duplicates from the integration options."
+    },
+    "meter_never_seen": {
+      "title": "Elehant meter has not been seen",
+      "description": "Elehant meter {meter_id} has not been seen since the integration started. Check Bluetooth range, meter ID, and whether the meter is transmitting."
     }
   }
 }

@@ -5,7 +5,11 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from .const import DATA_LEGACY_YAML_CONFIG, DOMAIN
+from .const import (
+    DATA_LEGACY_YAML_CONFIG,
+    DEFAULT_NEVER_SEEN_REPAIR_GRACE_SECONDS,
+    DOMAIN,
+)
 
 PLATFORMS = ["sensor"]
 
@@ -44,17 +48,49 @@ async def async_setup_entry(hass: Any, entry: Any) -> bool:
     from homeassistant.const import Platform
     from homeassistant.core import callback
     from homeassistant.exceptions import ConfigEntryNotReady
+    from homeassistant.helpers.event import async_call_later
 
+    from .config_flow import ElehantWaterConfigFlow
+    from .config_schema import normalize_config_entry_data
     from .coordinator import ElehantWaterCoordinator
+    from .repairs import (
+        async_create_no_bluetooth_scanner_issue,
+        async_delete_no_bluetooth_scanner_issue,
+        async_update_config_repair_issues,
+    )
 
     hass.data.setdefault(DOMAIN, {})
 
-    if bluetooth.async_scanner_count(hass, connectable=False) == 0:
-        raise ConfigEntryNotReady("No Home Assistant Bluetooth scanners available")
+    try:
+        normalized_data = normalize_config_entry_data(dict(entry.data))
+    except (TypeError, ValueError) as err:
+        async_update_config_repair_issues(hass, dict(entry.data))
+        _LOGGER.error("Invalid Elehant Water config entry: %s", err)
+        return False
+    if normalized_data != entry.data or entry.version != ElehantWaterConfigFlow.VERSION:
+        hass.config_entries.async_update_entry(
+            entry,
+            data=normalized_data,
+            version=ElehantWaterConfigFlow.VERSION,
+        )
 
-    coordinator = ElehantWaterCoordinator(hass, entry.data)
+    if bluetooth.async_scanner_count(hass, connectable=False) == 0:
+        async_create_no_bluetooth_scanner_issue(hass)
+        raise ConfigEntryNotReady("No Home Assistant Bluetooth scanners available")
+    async_delete_no_bluetooth_scanner_issue(hass)
+
+    coordinator = ElehantWaterCoordinator(hass, normalized_data)
+    async_update_config_repair_issues(hass, normalized_data)
     hass.data[DOMAIN][entry.entry_id] = coordinator
+    entry.async_on_unload(coordinator.async_shutdown)
     entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+    entry.async_on_unload(
+        async_call_later(
+            hass,
+            DEFAULT_NEVER_SEEN_REPAIR_GRACE_SECONDS,
+            lambda now: coordinator.async_update_repair_issues(),
+        )
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, [Platform.SENSOR])
 
@@ -94,4 +130,12 @@ async def async_unload_entry(hass: Any, entry: Any) -> bool:
 
 async def async_migrate_entry(hass: Any, entry: Any) -> bool:
     """Migrate an Elehant Water config entry."""
+    from .config_flow import ElehantWaterConfigFlow
+    from .config_schema import normalize_config_entry_data
+
+    hass.config_entries.async_update_entry(
+        entry,
+        data=normalize_config_entry_data(dict(entry.data)),
+        version=ElehantWaterConfigFlow.VERSION,
+    )
     return True

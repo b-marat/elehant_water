@@ -12,6 +12,7 @@ class ElehantChannel(StrEnum):
     VOLUME = "volume"
     TARIFF_1 = "tariff_1"
     TARIFF_2 = "tariff_2"
+    TOTAL = "total"
     TEMPERATURE = "temperature"
 
 
@@ -35,3 +36,6 @@ class ElehantReading:
     rssi: int | None = None
     temperature_celsius: float | None = None
     alternate_meter_ids: tuple[str, ...] = ()
+    manufacturer_meter_id: str | None = None
+    address_meter_id: str | None = None
+    identity_mismatch: bool = False

@@ -5,8 +5,10 @@ from __future__ import annotations
 from custom_components.elehant_water.models import ElehantChannel, ElehantPacketKind
 from custom_components.elehant_water.parser import (
     looks_like_elehant_address,
+    meter_id_from_manufacturer_payload,
     meter_id_from_address_suffix,
     normalize_address,
+    normalize_meter_id,
     packet_kind_from_address,
     parse_manufacturer_data,
     parse_manufacturer_payload,
@@ -50,6 +52,18 @@ def test_meter_id_from_address_suffix() -> None:
     assert meter_id_from_address_suffix("AF:01:02:01:6A:38") is None
 
 
+def test_meter_id_from_manufacturer_payload() -> None:
+    """Manufacturer data contains the same canonical 24-bit meter ID."""
+    assert meter_id_from_manufacturer_payload(SINGLE_PAYLOAD) == "92728"
+    assert meter_id_from_manufacturer_payload(SINGLE_PAYLOAD_WITH_COMPANY) == "92728"
+
+
+def test_normalize_meter_id() -> None:
+    """Imported shorter IDs are canonical decimal 24-bit values."""
+    assert normalize_meter_id("299") == "299"
+    assert normalize_meter_id(92728) == "92728"
+
+
 def test_parse_single_tariff_payload_without_company_id() -> None:
     """The real single-tariff sample parses without the company ID prefix."""
     reading = parse_manufacturer_payload("B0:01:02:01:6A:38", SINGLE_PAYLOAD, -78)
@@ -57,11 +71,13 @@ def test_parse_single_tariff_payload_without_company_id() -> None:
     assert reading is not None
     assert reading.packet_kind is ElehantPacketKind.SINGLE_TARIFF
     assert reading.channel is ElehantChannel.VOLUME
-    assert reading.meter_id == "27192"
+    assert reading.meter_id == "92728"
+    assert reading.manufacturer_meter_id == "92728"
+    assert reading.address_meter_id == "92728"
     assert reading.raw_count == 3791455
     assert reading.rssi == -78
     assert reading.temperature_celsius == 16.06
-    assert reading.alternate_meter_ids == ("92728",)
+    assert reading.alternate_meter_ids == ()
 
 
 def test_parse_single_tariff_payload_with_company_id() -> None:
@@ -73,7 +89,7 @@ def test_parse_single_tariff_payload_with_company_id() -> None:
     )
 
     assert reading is not None
-    assert reading.meter_id == "27192"
+    assert reading.meter_id == "92728"
     assert reading.raw_count == 3791455
 
 
@@ -82,7 +98,7 @@ def test_parse_manufacturer_data() -> None:
     reading = parse_manufacturer_data("B0:01:02:01:6A:38", {65535: SINGLE_PAYLOAD})
 
     assert reading is not None
-    assert reading.meter_id == "27192"
+    assert reading.meter_id == "92728"
 
 
 def test_short_payload_is_ignored() -> None:

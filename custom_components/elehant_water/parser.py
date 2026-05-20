@@ -13,8 +13,17 @@ PREFIX_ELEHANT_FAMILY = "b0"
 
 COMPANY_ID_PREFIX = b"\xff\xff"
 
-MIN_VOLUME_PAYLOAD_LEN = 12
+MIN_VOLUME_PAYLOAD_LEN = 13
 MIN_TEMPERATURE_PAYLOAD_LEN = 16
+MAX_METER_ID = 0xFFFFFF
+
+
+def normalize_meter_id(value: str | int) -> str:
+    """Normalize a meter ID to canonical decimal text for a 24-bit Elehant ID."""
+    meter_id = int(str(value))
+    if meter_id < 0 or meter_id > MAX_METER_ID:
+        raise ValueError("meter ID must be in range 0..16777215")
+    return str(meter_id)
 
 
 def normalize_address(address: str) -> str:
@@ -43,7 +52,7 @@ def looks_like_elehant_address(address: str) -> bool:
 
 
 def meter_id_from_address_suffix(address: str) -> str | None:
-    """Return the legacy fork meter ID encoded in the final three address bytes."""
+    """Return the canonical meter ID encoded in the final three address bytes."""
     parts = normalize_address(address).split(":")
     if len(parts) != 6 or parts[0] != PREFIX_ELEHANT_FAMILY:
         return None
@@ -58,6 +67,14 @@ def strip_company_id_prefix(payload: bytes) -> bytes:
     if payload.startswith(COMPANY_ID_PREFIX):
         return payload[len(COMPANY_ID_PREFIX) :]
     return payload
+
+
+def meter_id_from_manufacturer_payload(payload: bytes) -> str | None:
+    """Return the canonical meter ID encoded in manufacturer payload bytes."""
+    payload = strip_company_id_prefix(payload)
+    if len(payload) < 9:
+        return None
+    return str(int.from_bytes(payload[6:9], byteorder="little"))
 
 
 def parse_manufacturer_payload(
@@ -79,14 +96,20 @@ def parse_manufacturer_payload(
     if len(payload) < min_len:
         return None
 
-    meter_id = str(int.from_bytes(payload[6:8], byteorder="little"))
+    manufacturer_meter_id = meter_id_from_manufacturer_payload(payload)
+    if manufacturer_meter_id is None:
+        return None
     address_meter_id = meter_id_from_address_suffix(address)
+    identity_mismatch = (
+        address_meter_id is not None and address_meter_id != manufacturer_meter_id
+    )
+    meter_id = manufacturer_meter_id
     alternate_meter_ids = (
         (address_meter_id,)
         if address_meter_id is not None and address_meter_id != meter_id
         else ()
     )
-    raw_count = int.from_bytes(payload[9:12], byteorder="little")
+    raw_count = int.from_bytes(payload[9:13], byteorder="little")
     normalized_address = normalize_address(address)
 
     if packet_kind is ElehantPacketKind.SINGLE_TARIFF:
@@ -102,6 +125,9 @@ def parse_manufacturer_payload(
             rssi=rssi,
             temperature_celsius=temperature_celsius,
             alternate_meter_ids=alternate_meter_ids,
+            manufacturer_meter_id=manufacturer_meter_id,
+            address_meter_id=address_meter_id,
+            identity_mismatch=identity_mismatch,
         )
 
     temperature_celsius = int.from_bytes(payload[14:16], byteorder="little") / 100
@@ -119,6 +145,9 @@ def parse_manufacturer_payload(
         rssi=rssi,
         temperature_celsius=temperature_celsius,
         alternate_meter_ids=alternate_meter_ids,
+        manufacturer_meter_id=manufacturer_meter_id,
+        address_meter_id=address_meter_id,
+        identity_mismatch=identity_mismatch,
     )
 
 
